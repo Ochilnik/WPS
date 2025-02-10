@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water pumping and storage station</title>
+    <script>
+        var data = "";
+        var time = "";
+        var temperature = "";
+        var humidity = "";
+
+        var voltage = "";
+        var rmsCurrent = "";
+        var pressure = "";
+
+        var lastOnTime = "";
+        var timePerDay = "";
+        var startsPerDay = "";
+        var timeToOff = "";
+
+        var block = "";
+        var alarm = "";
+        var relay = "";
+
+        var strCommand = "";
+
+        // AJAX запрос для получения данных с сервера
+        function getDataFromServer() {
+            var nocache = "&nocache=" + Math.random() * 1000000;
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function() {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        if (this.responseXML != null) {
+                            // Получаем данные с сервера
+                            data = this.responseXML.getElementsByTagName('data')[0].childNodes[0].nodeValue;
+                            time = this.responseXML.getElementsByTagName('time')[0].childNodes[0].nodeValue;
+                            temperature = this.responseXML.getElementsByTagName('temperature')[0].childNodes[0].nodeValue;
+                            humidity = this.responseXML.getElementsByTagName('humidity')[0].childNodes[0].nodeValue;
+
+                            voltage = this.responseXML.getElementsByTagName('voltage')[0].childNodes[0].nodeValue;
+                            rmsCurrent = this.responseXML.getElementsByTagName('rmsCurrent')[0].childNodes[0].nodeValue;
+                            pressure = this.responseXML.getElementsByTagName('pressure')[0].childNodes[0].nodeValue;
+
+                            lastOnTime = this.responseXML.getElementsByTagName('lastOnTime')[0].childNodes[0].nodeValue;
+                            timePerDay = this.responseXML.getElementsByTagName('timePerDay')[0].childNodes[0].nodeValue;
+                            startsPerDay = this.responseXML.getElementsByTagName('startsPerDay')[0].childNodes[0].nodeValue;
+                            timeToOff = this.responseXML.getElementsByTagName('timeToOff')[0].childNodes[0].nodeValue;
+
+                            block = this.responseXML.getElementsByTagName('block')[0].childNodes[0].nodeValue;
+                            alarm = this.responseXML.getElementsByTagName('alarm')[0].childNodes[0].nodeValue;
+                            relay = this.responseXML.getElementsByTagName('relay')[0].childNodes[0].nodeValue;
+
+                            // Обновляем элементы на странице
+                            document.getElementById("data").textContent = "Data: " + data;
+                            document.getElementById("time").textContent = "Time: " + time;
+                            document.getElementById("temperature").textContent = "Temperature: " + temperature + "°C";
+                            document.getElementById("humidity").textContent = "Humidity: " + humidity + "%";
+
+                            document.getElementById("voltage").value = voltage;
+                            document.getElementById("voltage").style.backgroundColor = voltage === "ON" ? "#00FF00" : "#FFFFFF"; // Зелёный, если ON, иначе белый
+                            document.getElementById("rms").value = rmsCurrent;
+                            document.getElementById("pressure").value = pressure;
+
+                            document.getElementById("last-time").value = lastOnTime;
+                            document.getElementById("time-per-day").value = timePerDay;
+                            document.getElementById("starts-per-day").value = startsPerDay;
+                            document.getElementById("time-to-off").textContent = timeToOff;
+
+                            // Обновляем цвета кнопок
+                            document.getElementById("start-btn").style.backgroundColor = relay === "ON" ? "#00FF00" : "#C2DFFF";
+                            document.getElementById("stop-btn").style.backgroundColor = alarm === "ON" ? "yellow" : "#C2DFFF";
+                            document.getElementById("block-btn").style.backgroundColor = block === "ON" ? "red" : "#C2DFFF";
+                        }
+                    }
+                }
+            };
+            // Отправляем запрос на сервер
+            // console.log(strCommand);
+            request.open("GET", "ajax_inputs?" + strCommand + nocache, true);
+            request.send(null);
+            setTimeout(getDataFromServer, 1000); // Повторяем запрос каждую секунду
+        }
+        
+        // PRESS BUTTONS
+        function onStartClick() {
+            strCommand = "action=START";
+            getDataFromServer();
+            strCommand = ""; 
+        }
+        function onStopClick() {
+            strCommand = "action=STOP";
+            getDataFromServer();
+            strCommand = ""; 
+        }
+        function onBlockClick() {
+            strCommand = "action=BLOCK_WORK";
+            getDataFromServer();
+            strCommand = ""; 
+        }
+        function setTime() {
+            const now = new Date();
+            // Получаем параметры времени
+            const second = now.getSeconds();
+            const minute = now.getMinutes();
+            const hour = now.getHours(); // В формате 0-23
+            const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // Преобразуем из 0-6 (в JS) в 1-7
+            const dayOfMonth = now.getDate();
+            const month = now.getMonth() + 1; // В JS месяцы начинаются с 0
+            const year = now.getFullYear() % 100; // Берем последние две цифры года
+            // Формируем строку запроса
+            strCommand = `second=${second}&minute=${minute}&hour=${hour}&dayOfWeek=${dayOfWeek}&dayOfMonth=${dayOfMonth}&month=${month}&year=${year}`;
+            getDataFromServer();
+            strCommand = ""; 
+        }
+        
+
+        // Запускаем получение данных при загрузке страницы
+        window.onload = function() {
+            getDataFromServer();
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #C2DFFF; /* Синее море фон страницы */
+        }
+
+        h1 {
+            margin-top: 50px;
+        }
+
+        .variables {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .variable {
+            font-size: 18px;
+            margin: 0 20px;
+        }
+
+        .boxes-container {
+            display: flex;
+            justify-content: space-evenly;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            border: 2px solid black;
+            padding: 20px;
+            width: 30%;
+            box-sizing: border-box;
+            margin: 10px;
+        }
+
+        .box h2 {
+            margin-top: 0;
+        }
+
+        .param {
+            margin: 10px 0;
+        }
+
+        .param label {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .box button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .input-field {
+            padding: 5px;
+            width: 90%;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center; /* Значения в полях по центру */
+            background-color: #FFFFFF; /* Начальный фон — белый */
+        }
+
+        .box:nth-child(1) {
+            background-color: #3BB9FF; /* Глубокий небесно-голубой фон для PUMP */
+        }
+
+        .box:nth-child(2) {
+            background-color: #FFDB58; /* горчичный фон для TIMERS */
+        }
+
+        .box:nth-child(3) {
+            background-color: #FEFCFF; /* Молочный белый фон для FORCED */
+        }
+
+        /* Медиазапрос для вертикального формата */
+        @media (max-width: 768px) {
+            .boxes-container {
+                flex-direction: column; /* Вертикальное расположение боксов */
+                align-items: center;
+            }
+
+            .box {
+                width: 80%; /* Уменьшаем ширину боксов на мобильных устройствах */
+            }
+        }
+        
+        #time-to-off {
+            margin-left: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .set-time-btn {
+            padding: 8px 16px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .right-par {
+            text-align: right;
+            font-family: verdana;
+            font-size: 15px;
+            margin: 10px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Water pumping and storage station</h1>
+
+    <div class="variables">
+        <div class="variable" id="temperature">Temperature: ...</div>
+        <div class="variable" id="humidity">Humidity: ...</div>
+        <div class="variable" id="data">Data: ...</div>
+        <div class="variable" id="time">Time: ...</div>
+        <button class="set-time-btn" onclick="setTime()">Set Time</button>
+    </div>
+
+    <div class="boxes-container">
+        <!-- PUMP Box -->
+        <div class="box">
+            <h2>PUMP</h2>
+            <div class="param">
+                <label for="voltage">Voltage is:</label>
+                <input type="text" id="voltage" class="input-field">
+            </div>
+            <div class="param">
+                <label for="rms">RMS current:</label>
+                <input type="text" id="rms" class="input-field">
+            </div>
+            <div class="param">
+                <label for="pressure">Pressure:</label>
+                <input type="text" id="pressure" class="input-field">
+            </div>
+        </div>
+
+        <!-- TIMERS Box -->
+        <div class="box">
+            <h2>TIMERS</h2>
+            <div class="param">
+                <label for="last-time">Last on time:</label>
+                <input type="text" id="last-time" class="input-field">
+            </div>
+            <div class="param">
+                <label for="time-per-day">Time per Day:</label>
+                <input type="text" id="time-per-day" class="input-field">
+            </div>
+            <div class="param">
+                <label for="starts-per-day">Number starts per day:</label>
+                <input type="text" id="starts-per-day" class="input-field">
+            </div>
+        </div>
+
+        <!-- FORCED Box -->
+        <div class="box">
+            <h2>FORCED</h2>
+            <button id="start-btn" onclick="onStartClick()">START <span id="time-to-off"></span></button>
+            <button id="stop-btn" onclick="onStopClick()">STOP</button>
+            <button id="block-btn" onclick="onBlockClick()">BLOCK WORK</button>
+        </div>
+    </div>
+
+    <footer>
+		<p class="right-par">&copy; Ochilnik - WPS 2025</p>
+	</footer>
+
+</body>
+</html>
